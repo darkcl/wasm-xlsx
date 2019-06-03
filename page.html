@@ -1,0 +1,95 @@
+<!doctype html>
+<!--
+Copyright 2018 The Go Authors. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+-->
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Go wasm</title>
+</head>
+
+<body>
+	<!--
+	Add the following polyfill for Microsoft Edge 17/18 support:
+	<script src="https://cdn.jsdelivr.net/npm/text-encoding@0.7.0/lib/encoding.min.js"></script>
+	(see https://caniuse.com/#feat=textencoder)
+	-->
+	<script src="wasm_exec.js"></script>
+	<script>
+    var dataFile = null;
+
+		if (!WebAssembly.instantiateStreaming) { // polyfill
+			WebAssembly.instantiateStreaming = async (resp, importObject) => {
+				const source = await (await resp).arrayBuffer();
+				return await WebAssembly.instantiate(source, importObject);
+			};
+		}
+
+    const go = new Go();
+    
+    let memoryBytes;
+		let mod, inst;
+		WebAssembly.instantiateStreaming(fetch("test.wasm"), go.importObject).then((result) => {
+			mod = result.module;
+      inst = result.instance;
+			memoryBytes = new Uint8Array(inst.exports.mem.buffer);
+
+      document.getElementById('fileInput').addEventListener('change', function() {
+        var reader = new FileReader();
+        reader.onload = function() {
+          bytes = new Uint8Array(this.result);
+          var arrayBuffer = this.result,
+            array = new Uint8Array(arrayBuffer),
+            binaryString = String.fromCharCode.apply(null, array);
+          console.log(binaryString);
+          dataFile = binaryString;
+        }
+        reader.readAsArrayBuffer(this.files[0]);
+      }, false);
+			document.getElementById("runButton").disabled = false;
+		}).catch((err) => {
+			console.error(err);
+    });
+    
+    var xlxsFile = null;
+		// function displayImage(pointer, length) {
+		// 	let resultBytes = memoryBytes.slice(pointer, pointer + length);
+		// 	let blob = new Blob([resultBytes], {'type': imageType});
+		// 	document.getElementById('targetImg').src = URL.createObjectURL(blob);
+		// }
+    function gotMem(pointer) {
+      memoryBytes.set(bytes, pointer);
+    }
+    
+    makeExcelFile = function (pointer, length) {
+      let resultBytes = memoryBytes.slice(pointer, pointer + length);
+      var blob = new Blob([resultBytes], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      var filename = 'sheet.xlsx';
+
+      if(window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveBlob(blob, filename);
+      }
+      else{
+          var elem = window.document.createElement('a');
+          elem.href = window.URL.createObjectURL(blob);
+          elem.download = filename;        
+          document.body.appendChild(elem);
+          elem.click();        
+          document.body.removeChild(elem);
+      }
+    };
+
+		async function run() {
+			console.clear();
+			await go.run(inst);
+			inst = await WebAssembly.instantiate(mod, go.importObject); // reset instance
+    }
+	</script>
+  Select a file: <input type="file" id="fileInput" name="csvFile" accept=".csv"><br><br>
+	<button onClick="run();" id="runButton" disabled>Run</button>
+</body>
+
+</html>
