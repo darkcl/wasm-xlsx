@@ -17,9 +17,11 @@ class: lead
 
 ---
 
-- A set of standards binary format
+- It is not a language
+- A set of low-level binary format so other language can compile to
 - Cross-browser\*
-- JS Interface
+- Non-Web Embeddings
+- JS Interface to WASM
 
 ---
 
@@ -31,11 +33,16 @@ class: lead
 
 ---
 
+- Faster than JS to load and execute
+- JS will perform the same as WASM if the code is optimize
+
+---
+
 ![](./assets/perf.png)
 
 ---
 
-# Usage
+# Why WebAssembly?
 
 - Image / Video Processing ([squoosh](https://squoosh.app))
 - Gaming ([Unreal Engine](https://s3.amazonaws.com/mozilla-games/ZenGarden/EpicZenGarden.html))
@@ -43,11 +50,16 @@ class: lead
 
 ---
 
-# WebAssembly with Golang
+# Demo
 
 ---
 
-# Demo
+# Conclusion
+
+---
+
+- It is not to "kill" javascript
+- It is meant to solve some very niche problem
 
 ---
 
